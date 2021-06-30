@@ -24,19 +24,11 @@ from motpy import Detection, MultiObjectTracker
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.offsetbox import TextArea, DrawingArea, OffsetImage, AnnotationBbox
+import pandas as pd 
 
 #Create a new figure
 fig=plt.figure()
-ax=fig.add_subplot(1,1,1)
-ax.set_title("Back view",fontsize='large')
-ax.set_xlim(0, 1)
-ax.set_ylim(0, 1)
-
-bike = mpimg.imread('bike.jpg')
-
-imagebox = OffsetImage(bike, zoom=0.2)
-
-ab = AnnotationBbox(imagebox, (0.5,1))
+ax2=fig.add_subplot(1,1,1)
 
 
 
@@ -157,8 +149,11 @@ while(video.isOpened()):
     
     # Start timer (for calculating frame rate)
     t1 = cv2.getTickCount()
-
-    ax.add_artist(ab)
+    
+    
+    ax2.set_xlim(0, imW)
+    ax2.set_ylim(0, imH*2)
+    
 
 
     # Acquire frame and resize to expected shape [1xHxWx3]
@@ -219,7 +214,7 @@ while(video.isOpened()):
     compare_idx=dict_idx
     dict_idx={}
     ##color maps for each tracked object
-    color={0:(0,0,0),1:(255,255,255),2:(255,0,0),3:(255,192,203),4:(255,255,0),5:(0,0,255),6:(0,255,0)}
+    color={0:(0,0,0),1:(255,255,0),2:(0,0,255),3:(255,192,203),4:(0,255,255),5:(255,0,0),6:(0,255,0)}
     c=0
 
     # Loop over all detections and draw detection box if confidence is above minimum threshold
@@ -247,17 +242,12 @@ while(video.isOpened()):
             
             if len(compare_idx)==0:
                 dict_idx[bx_id]=[x_center,y_center,c,area]
-                continue
                 
             else:
                 
                 if bx_id in compare_idx.keys():
                     #area gets bigger 
-                    if compare_idx[bx_id][3]<=area:
-                        dict_idx[bx_id]=[x_center,y_center,compare_idx[bx_id][2],area]
-    
-                    else:
-                        dict_idx[bx_id]=[x_center,y_center,compare_idx[bx_id][2],area]                        
+                   dict_idx[bx_id]=[x_center,y_center,compare_idx[bx_id][2],area]                        
                         
                         
                 #newly detected bbox         
@@ -279,18 +269,21 @@ while(video.isOpened()):
             cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
             cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
     
-    colormap={0:'k',1:'w',2:'r',3:'m',4:'y',5:'b',6:'g'}
+    colormap={0:'k',1:'aquamarine',2:'r',3:'m',4:'y',5:'b',6:'g'}
     if len(compare_idx) !=0:
         #Get x,y,color,area values
         
-        x=list(dict_idx.values())
-        x=x[:,1]
-        print(x)
-        
-        y=dict_idx.values()[:,1]/imH
-        cmap=[color[i] for i in dict.values()[:,2]]
-        size=dict_idx.values()[:,3]/(imW*imH)
-        ax.scatter(x,y,size,c=cmap,marker='o')
+        temp_dict=list(dict_idx.values())
+        temp_dict =np.float32(temp_dict)
+        x=temp_dict[:,0]
+        y=temp_dict[:,1]*2
+
+        cmap=temp_dict[:,2]
+        cmap=[colormap[i] for i in cmap]
+        size=temp_dict[:,3]/(imW*imH)*100000
+
+
+        ax2.scatter(x,y,size,cmap,marker='o')
 
     # Calculate framerate
     t2 = cv2.getTickCount()
@@ -317,5 +310,6 @@ while(video.isOpened()):
 video.realse()
 out.realse()
 cv2.destroyAllWindows()
+
 
 
